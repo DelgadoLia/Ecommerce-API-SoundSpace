@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Iniciar Sesión - SpaceSound</title>
+    <link rel="icon" type="image/png" href="imagenes/logo.png">
+    <script src="https://kit.fontawesome.com/f9c3e36fb0.js" crossorigin="anonymous"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Momo+Trust+Display:wght@400;600;700;800&family=Playfair+Display:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/index.css">
+</head>
+<body>
+    <!-- Header -->
+    <header>
+        <div class="header-container">
+            <div class="logo-container">
+                <img src="imagenes/logo.png" alt="SpaceSound Logo" class="logo-img">
+                <div class="logo">SpaceSound</div>
+            </div>
+            <nav>
+                <ul>
+                    <li><a href="paginaprincipal.html">Inicio</a></li>
+                    <li><a href="nosotros.html">Nosotros</a></li>
+                    <li><a href="preguntasfrecuentes.html">Preguntas Frecuentes</a></li>
+                    <li><a href="contactanos.html">Contáctanos</a></li>
+                    <li><a href="tienda.html">Tienda</a></li>
+                </ul> 
+            </nav>
+            <div class="user-actions">
+                <div class="user-actions">
+                <button class="user-btn" onclick="window.location.href='usuario.html'">
+                    <i class="fas fa-user"></i>
+                    Mi Cuenta
+                </button>
+                <button class="cart-btn" onclick="window.location.href='carrito.html'">
+                    <i class="fas fa-shopping-cart"></i>
+                    Carrito
+                </button>
+            </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Hero Section Login -->
+    <section class="login-hero">
+        <div class="container">
+            <div class="hero-content">
+                <h1>Iniciar Sesión</h1>
+                <p>Accede a tu cuenta para gestionar tus pedidos y preferencias</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Formulario de Login -->
+    <section class="login-section">
+        <div class="container">
+            <div class="auth-container">
+                <!-- Login Form -->
+                <div class="auth-form" id="loginForm">
+                    <div class="form-header">
+                        <h2>Bienvenido</h2>
+                        <p>Ingresa tus credenciales para acceder</p>
+                    </div>
+
+                    <form id="loginFormElement">
+                        <div class="form-group">
+                            <label for="login-email">Correo Electrónico</label>
+                            <label for="login-username">Nombre de Usuario o Email *</label>
+                            <input type="text" id="login-username" name="username" placeholder="Tu nombre de usuario o email" required>
+                            <span class="error-message" id="usernameError"></span>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="login-password">Contraseña</label>
+                            <div class="password-input">
+                                <input type="password" id="login-password" name="password" required>
+                                <button type="button" class="toggle-password" onclick="togglePassword('login-password')">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                            </div>
+                            <span class="error-message" id="passwordError"></span>
+                        </div>
+
+                        <!-- CAPTCHA desde Backend -->
+                        <div class="captcha-container" id="captchaContainer">
+                            <div class="captcha-image" id="captchaImage">
+                                <!-- La imagen del captcha se cargará desde el backend -->
+                                <div class="captcha-loading">
+                                    <i class="fas fa-spinner fa-spin"></i>
+                                    <span>Cargando CAPTCHA...</span>
+                                </div>
+                            </div>
+                            <button type="button" class="captcha-refresh" onclick="refreshCaptcha()">
+                                <i class="fas fa-sync-alt"></i>
+                            </button>
+                            <input type="text" id="captcha-input" name="captcha" placeholder="Ingresa el código" required>
+                        </div>
+
+                        <div class="form-options">
+                            <a href="#" class="forgot-password" onclick="showForgotPassword()">
+                                ¿Olvidaste tu contraseña?
+                            </a>
+                        </div>
+
+                        <button type="submit" class="btn-submit" id="loginSubmitBtn">
+                            <i class="fas fa-sign-in-alt"></i>
+                            Iniciar Sesión
+                        </button>
+
+                        <div class="auth-switch">
+                            <p>¿No tienes una cuenta? <a href="paginaprincipal.html#registrarse">Regístrate aquí</a></p>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- Register Form (Oculto por defecto) -->
+                <div class="auth-form" id="registerForm" style="display: none;">
+                    <div class="form-header">
+                        <h2>Crear Cuenta</h2>
+                        <p>Únete a la comunidad SpaceSound</p>
+                    </div>
+
+                    <form id="registerFormElement">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="register-name">Nombre Completo</label>
+                                <input type="text" id="register-name" name="name" required>
+                                <span class="error-message" id="nameError"></span>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="register-username">Nombre de Usuario</label>
+                                <input type="text" id="register-username" name="username" required>
+                                <span class="error-message" id="usernameError"></span>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="register-email">Correo Electrónico</label>
+                            <input type="email" id="register-email" name="email" required>
+                            <span class="error-message" id="registerEmailError"></span>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="register-password">Contraseña</label>
+                            <div class="password-input">
+                                <input type="password" id="register-password" name="password" required>
+                                <button type="button" class="toggle-password" onclick="togglePassword('register-password')">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                            </div>
+                            <span class="error-message" id="registerPasswordError"></span>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="confirm-password">Confirmar Contraseña</label>
+                            <div class="password-input">
+                                <input type="password" id="confirm-password" name="confirm_password" required>
+                                <button type="button" class="toggle-password" onclick="togglePassword('confirm-password')">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                            </div>
+                            <span class="error-message" id="confirmPasswordError"></span>
+                        </div>
+
+                        <div class="form-options">
+                            <label class="checkbox-label">
+                                <input type="checkbox" id="accept-terms" name="accept_terms" required>
+                                <span class="checkmark"></span>
+                                Acepto los <a href="#">términos y condiciones</a>
+                            </label>
+                        </div>
+
+                        <button type="submit" class="btn-submit" id="registerSubmitBtn">
+                            <i class="fas fa-user-plus"></i>
+                            Crear Cuenta
+                        </button>
+
+                        <div class="auth-switch">
+                            <p>¿Ya tienes una cuenta? <a href="#" onclick="showLogin()">Inicia sesión aquí</a></p>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- Forgot Password Form (Oculto por defecto) -->
+                <div class="auth-form" id="forgotPasswordForm" style="display: none;">
+                    <div class="form-header">
+                        <h2>Recuperar Contraseña</h2>
+                        <p>Te enviaremos un enlace para restablecer tu contraseña</p>
+                    </div>
+
+                    <form id="forgotPasswordFormElement">
+                        <div class="form-group">
+                            <label for="recovery-email">Correo Electrónico</label>
+                            <input type="email" id="recovery-email" name="email" required>
+                            <span class="error-message" id="recoveryEmailError"></span>
+                        </div>
+
+                        <button type="submit" class="btn-submit" id="recoverySubmitBtn">
+                            <i class="fas fa-paper-plane"></i>
+                            Enviar Enlace de Recuperación
+                        </button>
+
+                        <div class="auth-switch">
+                            <p><a href="#" onclick="showLogin()">Volver al inicio de sesión</a></p>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer id="contact">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h3>Space Sound</h3>
+                    <p>"La ciudad donde la música nunca deja de girar"</p>
+                </div>
+                <div class="footer-section">
+                    <h3>Enlaces Rápidos</h3>
+                    <ul>
+                        <li><a href="paginaprincipal.html">Inicio</a></li>
+                        <li><a href="nosotros.html">Nosotros</a></li>
+                        <li><a href="preguntasfrecuentes.html">Preguntas Frecuentes</a></li>
+                        <li><a href="contactanos.html">Contáctanos</a></li>
+                        <li><a href="tienda.html">Tienda</a></li>
+                    </ul>
+                </div>
+                <div class="footer-section">
+                    <h3>Síguenos</h3>
+                    <div class="social-links">
+                        <a href="#"><i class="fa-brands fa-facebook-f"></i></a>
+                        <a href="#"><i class="fa-brands fa-instagram"></i></a>
+                        <a href="#"><i class="fa-brands fa-x-twitter"></i></a>
+                    </div>
+                </div>
+                <div class="footer-section">
+                    <h3>Contacto</h3>
+                    <p>spaceSound@gmail.com</p>
+                    <p>+1 234 567 8900</p>
+                </div>
+            </div>
+            <div class="copyright">
+                <p class="copy">© 2025 SpaceSound. ProyectoFinal Programación de Sistemas Web.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="javascript/index.js"></script>
+</body>
+</html>

@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tienda - SpaceSound</title>
+    <link rel="icon" type="image/png" href="imagenes/logo.png">
+    <script src="https://kit.fontawesome.com/f9c3e36fb0.js" crossorigin="anonymous"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Momo+Trust+Display:wght@400;600;700;800&family=Playfair+Display:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/index.css">
+</head>
+<body>
+    <!-- Header -->
+    <header>
+        <div class="header-container">
+            <div class="logo-container">
+                <img src="imagenes/logo.png" alt="SpaceSound Logo" class="logo-img">
+                <div class="logo">SpaceSound</div>
+            </div>
+            <nav>
+                <ul>
+                    <li><a href="paginaprincipal.html">Inicio</a></li>
+                    <li><a href="nosotros.html">Nosotros</a></li>
+                    <li><a href="preguntasfrecuentes.html">Preguntas Frecuentes</a></li>
+                    <li><a href="contactanos.html">Contáctanos</a></li>
+                    <li><a href="tienda.html">Tienda</a></li>
+                </ul> 
+            </nav>
+            <div class="user-actions">
+                <button class="user-btn" onclick="window.location.href='usuario.html'">
+                    <i class="fas fa-user"></i>
+                    Mi Cuenta
+                </button>
+                <button class="cart-btn" onclick="window.location.href='carrito.html'">
+                    <i class="fas fa-shopping-cart"></i>
+                    Carrito
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Hero Section Tienda -->
+    <section class="tienda-hero">
+        <div class="container">
+            <div class="hero-content">
+                <h1>Tienda SpaceSound</h1>
+                <p>Descubre productos exclusivos de tu banda favorita</p>
+                <div class="search-bar">
+                    <input type="text" placeholder="Buscar productos...">
+                    <button><i class="fas fa-search"></i> Buscar</button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Categorías -->
+    <section class="categorias">
+        <div class="container">
+            <h2 class="section-title">Categorías</h2>
+            <div class="categorias-grid">
+                <div class="categoria-card">
+                    <i class="fas fa-music"></i>
+                    <h3>Rock</h3>
+                    <p>Lo más aleatorio!!</p>
+                </div>
+                <div class="categoria-card">
+                    <i class="fas fa-compact-disc"></i>
+                    <h3>Clásico</h3>
+                    <p>Vinilos y CDs</p>
+                </div>
+                <div class="categoria-card">
+                    <i class="fas fa-guitar"></i>
+                    <h3>Corridos</h3>
+                    <p>De cualquier época</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Productos más vendidos -->
+    <section class="music">
+        <div class="container">
+            <h2 class="section-title">Productos más vendidos</h2>
+            <div class="productos-grid">
+                <!-- Producto 1 -->
+                <div class="producto-card">
+                    <img src="https://images.unsplash.com/photo-1526170375885-4d8ecf77b99f?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=80" alt="Playera Oficial" class="producto-img">
+                    <div class="producto-info">
+                        <h3>Playera Classic Black</h3>
+                        <p>Playera 100% algodón con diseño exclusivo</p>
+                        <div class="producto-precio">
+                            $24.99
+                            <span class="producto-precio-original">$29.99</span>
+                        </div>
+                        <button class="btn-comprar">Añadir al Carrito</button>
+                    </div>
+                </div>
+
+                <!-- Producto 2 -->
+                <div class="producto-card">
+                    <img src="https://images.unsplash.com/photo-1571330735066-03aaa9429d89?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=80" alt="Vinilo" class="producto-img">
+                    <div class="producto-info">
+                        <h3>Vinilo Limited Edition</h3>
+                        <p>Edición especial en vinilo de 180g</p>
+                        <div class="producto-precio">
+                            $34.99
+                            <span class="producto-precio-original">$39.99</span>
+                        </div>
+                        <button class="btn-comprar">Añadir al Carrito</button>
+                    </div>
+                </div>
+
+                <!-- Producto 3 -->
+                <div class="producto-card">
+                    <img src="https://images.unsplash.com/photo-1589998059171-988d887df646?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=80" alt="Taza" class="producto-img">
+                    <div class="producto-info">
+                        <h3>Taza SpaceSound Pro</h3>
+                        <p>Taza de cerámica premium 350ml</p>
+                        <div class="producto-precio">$16.99</div>
+                        <button class="btn-comprar">Añadir al Carrito</button>
+                    </div>
+                </div>
+
+                <!-- Producto 4 -->
+                <div class="producto-card">
+                    <img src="https://images.unsplash.com/photo-1551698618-1dfe5d97d256?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=80" alt="Gorra" class="producto-img">
+                    <div class="producto-info">
+                        <h3>Gorra Ajustable</h3>
+                        <p>Gorra con diseño bordado premium</p>
+                        <div class="producto-precio">$22.99</div>
+                        <button class="btn-comprar">Añadir al Carrito</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Cupones -->
+    <section class="cupon-banner">
+        <div class="container">
+            <div class="cupon-content">
+                <div class="cupon-info">
+                    <h3>🎉 Cupón Especial 🎉</h3>
+                    <h2>ROCK25</h2>
+                    <p>25% DE DESCUENTO EN TODA LA TIENDA</p>
+                    <small>Válido hasta el 30 de Diciembre 2024</small>
+                </div>
+                <button class="btn-copiar-cupon" onclick="copiarCupon()">
+                    <i class="fas fa-copy"></i> Copiar Código
+                </button>
+            </div>
+        </div>
+    </section>
+
+    <!-- Ofertas Especiales -->
+    <section class="ofertas">
+        <div class="container">
+            <h2 class="section-title">Ofertas Especiales</h2>
+            <div class="productos-grid">
+                <!-- Oferta 1 -->
+                <div class="producto-card">
+                    <span class="producto-badge">-30%</span>
+                    <img src="https://images.unsplash.com/photo-1594633312681-425c7b97ccd1?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=80" alt="Hoodie" class="producto-img">
+                    <div class="producto-info">
+                        <h3>Hoodie Limited</h3>
+                        <p>Sudadera con capucha edición limitada</p>
+                        <div class="producto-precio">
+                            $45.99
+                            <span class="producto-precio-original">$65.99</span>
+                        </div>
+                        <button class="btn-comprar">Añadir al Carrito</button>
+                    </div>
+                </div>
+
+                <!-- Oferta 2 -->
+                <div class="producto-card">
+                    <span class="producto-badge">Pack</span>
+                    <img src="https://images.unsplash.com/photo-1511379938547-c1f69419868d?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=80" alt="Poster Pack" class="producto-img">
+                    <div class="producto-info">
+                        <h3>Poster Collection</h3>
+                        <p>Pack de 3 posters exclusivos 50x70cm</p>
+                        <div class="producto-precio">
+                            $29.99
+                            <span class="producto-precio-original">$44.99</span>
+                        </div>
+                        <button class="btn-comprar">Añadir al Carrito</button>
+                    </div>
+                </div>
+
+                <!-- Oferta 3 -->
+                <div class="producto-card">
+                    <span class="producto-badge">Nuevo</span>
+                    <img src="https://images.unsplash.com/photo-1505740420928-5e560c06d30e?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=80" alt="Audífonos" class="producto-img">
+                    <div class="producto-info">
+                        <h3>Audífonos Pro</h3>
+                        <p>Audífonos profesionales con logo SpaceSound</p>
+                        <div class="producto-precio">$89.99</div>
+                        <button class="btn-comprar">Añadir al Carrito</button>
+                    </div>
+                </div>
+
+                <!-- Oferta 4 -->
+                <div class="producto-card">
+                    <span class="producto-badge">-25%</span>
+                    <img src="https://images.unsplash.com/photo-1548036328-c9fa89d128fa?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=80" alt="Mochila" class="producto-img">
+                    <div class="producto-info">
+                        <h3>Mochila Tour</h3>
+                        <p>Mochila resistente para conciertos</p>
+                        <div class="producto-precio">
+                            $37.99
+                            <span class="producto-precio-original">$50.99</span>
+                        </div>
+                        <button class="btn-comprar">Añadir al Carrito</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer id="contact">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h3>Space Sound</h3>
+                    <p>"La ciudad donde la música nunca deja de girar"</p>
+                </div>
+                <div class="footer-section">
+                    <h3>Enlaces Rápidos</h3>
+                    <ul>
+                        <li><a href="paginaprincipal.html">Inicio</a></li>
+                        <li><a href="nosotros.html">Nosotros</a></li>
+                        <li><a href="preguntasfrecuentes.html">Preguntas Frecuentes</a></li>
+                        <li><a href="contactanos.html">Contáctanos</a></li>
+                    </ul>
+                </div>
+                <div class="footer-section">
+                    <h3>Síguenos</h3>
+                    <div class="social-links">
+                        <a href="#"><i class="fa-brands fa-facebook-f"></i></a>
+                        <a href="#"><i class="fa-brands fa-instagram"></i></a>
+                        <a href="#"><i class="fa-brands fa-x-twitter"></i></a>
+                    </div>
+                </div>
+                <div class="footer-section">
+                    <h3>Contacto</h3>
+                    <p>spaceSound@gmail.com</p>
+                    <p>+1 234 567 8900</p>
+                </div>
+            </div>
+            <div class="copyright">
+                <p class="copy">© 2025 SpaceSound. ProyectoFinal Programación de Sistemas Web.</p>
+            </div>
+        </div>
+    </footer>
+    <script src="javascript/index.js"></script>
+</body>
+</html>

@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Preguntas Frecuentes - SpaceSound</title>
+    <link rel="icon" type="image/png" href="imagenes/logo.png">
+    <script src="https://kit.fontawesome.com/f9c3e36fb0.js" crossorigin="anonymous"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Momo+Trust+Display:wght@400;600;700;800&family=Playfair+Display:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/index.css">
+</head>
+<body>
+    <!-- Header -->
+    <header>
+        <div class="header-container">
+            <div class="logo-container">
+                <img src="imagenes/logo.png" alt="SpaceSound Logo" class="logo-img">
+                <div class="logo">SpaceSound</div>
+            </div>
+            <nav>
+                <ul>
+                    <li><a href="paginaprincipal.html">Inicio</a></li>
+                    <li><a href="nosotros.html">Nosotros</a></li>
+                    <li><a href="preguntasfrecuentes.html" style="color: #ff5252;">Preguntas Frecuentes</a></li>
+                    <li><a href="contactanos.html">Contáctanos</a></li>
+                    <li><a href="tienda.html">Tienda</a></li>
+                </ul> 
+            </nav>
+            <div class="user-actions">
+                <button class="user-btn" onclick="window.location.href='usuario.html'">
+                    <i class="fas fa-user"></i>
+                    Mi Cuenta
+                </button>
+                <button class="cart-btn" onclick="window.location.href='carrito.html'">
+                    <i class="fas fa-shopping-cart"></i>
+                    Carrito
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Hero Section -->
+    <section class="faq-hero">
+        <div class="container">
+            <div class="hero-content">
+                <h1>Preguntas Frecuentes</h1>
+                <p>Encuentra respuestas a las dudas más comunes sobre SpaceSound</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Búsqueda -->
+    <section class="faq-search">
+        <div class="container">
+            <div class="search-bar">
+                <input type="text" id="faq-search" placeholder="Buscar en preguntas frecuentes...">
+                <button onclick="buscarFAQ()"><i class="fas fa-search"></i> Buscar</button>
+            </div>
+        </div>
+    </section>
+
+    <!-- Categorías -->
+    <section class="faq-categories-section">
+        <div class="container">
+            <div class="faq-categories">
+                <button class="category-btn active" data-category="all">Todas</button>
+                <button class="category-btn" data-category="pedidos">Pedidos</button>
+                <button class="category-btn" data-category="envios">Envíos</button>
+                <button class="category-btn" data-category="pagos">Pagos</button>
+            </div>
+        </div>
+    </section>
+
+    <!-- Preguntas Frecuentes -->
+    <section class="faq-content">
+        <div class="container">
+            <!-- Pedidos -->
+            <div class="faq-category" data-category="pedidos">
+                <h2 class="category-title">📦 Pedidos</h2>
+                <div class="faq-item">
+                    <div class="faq-question">
+                        <h3>¿Cómo puedo realizar un pedido?</h3>
+                        <i class="fas fa-chevron-down"></i>
+                    </div>
+                    <div class="faq-answer">
+                        <p>Para realizar un pedido simplemente:</p>
+                        <ol>
+                            <li>Navega por nuestra tienda online</li>
+                            <li>Selecciona los productos que deseas</li>
+                            <li>Añádelos al carrito de compras</li>
+                            <li>Procede al checkout y completa tus datos</li>
+                            <li>Selecciona método de pago y envío</li>
+                            <li>¡Confirma tu pedido!</li>
+                        </ol>
+                    </div>
+                </div>
+
+                <div class="faq-item">
+                    <div class="faq-question">
+                        <h3>¿Puedo modificar o cancelar mi pedido?</h3>
+                        <i class="fas fa-chevron-down"></i>
+                    </div>
+                    <div class="faq-answer">
+                        <p>No, debido a que el pedido entra en proceso de preparación y no puede ser modificado.</p>
+                        <p>Para cancelaciones, contáctanos inmediatamente a <strong>spaceSound@gmail.com</strong></p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Envíos -->
+            <div class="faq-category" data-category="envios">
+                <h2 class="category-title">🚚 Envíos</h2>
+                <div class="faq-item">
+                    <div class="faq-question">
+                        <h3>¿Hacen envíos internacionales?</h3>
+                        <i class="fas fa-chevron-down"></i>
+                    </div>
+                    <div class="faq-answer">
+                        <p>Sí, realizamos envíos a la mayoría de países. Los tiempos y costos varían según el destino.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Pagos -->
+            <div class="faq-category" data-category="pagos">
+                <h2 class="category-title">💳 Pagos</h2>
+                <div class="faq-item">
+                    <div class="faq-question">
+                        <h3>¿Qué métodos de pago aceptan?</h3>
+                        <i class="fas fa-chevron-down"></i>
+                    </div>
+                    <div class="faq-answer">
+                        <p>Aceptamos los siguientes métodos de pago:</p>
+                        <ul>
+                            <li>Tarjetas de crédito/débito (Visa, MasterCard, American Express)</li>
+                            <li>PayPal</li>
+                            <li>Transferencia bancaria</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="faq-item">
+                    <div class="faq-question">
+                        <h3>¿Es seguro pagar en su sitio web?</h3>
+                        <i class="fas fa-chevron-down"></i>
+                    </div>
+                    <div class="faq-answer">
+                        <p>Totalmente seguro. Utilizamos tecnología para encriptar todos los datos sensibles. </p>
+                </div>
+            </div>
+
+            <!-- Productos -->
+            <div class="faq-category" data-category="productos">
+                <h2 class="category-title">🎵 Productos</h2>
+                <div class="faq-item">
+                    <div class="faq-question">
+                        <h3>¿Los vinilos son ediciones originales?</h3>
+                        <i class="fas fa-chevron-down"></i>
+                    </div>
+                    <div class="faq-answer">
+                        <p>Sí, todos nuestros vinilos son ediciones originales y oficiales. Trabajamos directamente con las discográficas y artistas para ofrecer productos 100% auténticos.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Mi Cuenta -->
+            <div class="faq-category" data-category="cuenta">
+                <h2 class="category-title">👤 Mi Cuenta</h2>
+                <div class="faq-item">
+                    <div class="faq-question">
+                        <h3>¿Cómo recupero mi contraseña?</h3>
+                        <i class="fas fa-chevron-down"></i>
+                    </div>
+                    <div class="faq-answer">
+                        <p>En la página de inicio de sesión, haz clic en "¿Olvidaste tu contraseña?" e ingresa tu correo electrónico. Recibirás un enlace para restablecer tu contraseña.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Contacto Adicional -->
+    <section class="faq-contact">
+        <div class="container">
+            <div class="contact-card">
+                <h2>¿No encontraste tu respuesta?</h2>
+                <p>Estamos aquí para ayudarte. Contáctanos directamente y te responderemos.</p>
+                <div class="contact-buttons">
+                    <a href="contactanos.html" class="btn-contact">Contáctanos</a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer id="contact">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h3>Space Sound</h3>
+                    <p>"La ciudad donde la música nunca deja de girar"</p>
+                </div>
+                <div class="footer-section">
+                    <h3>Enlaces Rápidos</h3>
+                    <ul>
+                        <li><a href="paginaprincipal.html">Inicio</a></li>
+                        <li><a href="nosotros.html">Nosotros</a></li>
+                        <li><a href="preguntasfrecuentes.html">Preguntas Frecuentes</a></li>
+                        <li><a href="contactanos.html">Contáctanos</a></li>
+                        <li><a href="tienda.html">Tienda</a></li>
+                    </ul>
+                </div>
+                <div class="footer-section">
+                    <h3>Síguenos</h3>
+                    <div class="social-links">
+                        <a href="#"><i class="fa-brands fa-facebook-f"></i></a>
+                        <a href="#"><i class="fa-brands fa-instagram"></i></a>
+                        <a href="#"><i class="fa-brands fa-x-twitter"></i></a>
+                    </div>
+                </div>
+                <div class="footer-section">
+                    <h3>Contacto</h3>
+                    <p>spaceSound@gmail.com</p>
+                    <p>+1 234 567 8900</p>
+                </div>
+            </div>
+            <div class="copyright">
+                <p class="copy">© 2025 SpaceSound. ProyectoFinal Programación de Sistemas Web.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="javascript/index.js"></script>
+</body>
+</html>
