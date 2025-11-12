@@ -101,6 +101,111 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 });
 
+// Funcionalidad para el modal de productos
+document.addEventListener('DOMContentLoaded', function() {
+    // Elementos del modal
+    const modal = document.getElementById("modalProducto");
+    const closeModal = document.querySelector(".close");
+    const cantidadValue = document.getElementById("cantidadValue");
+    const decreaseBtn = document.getElementById("decreaseQty");
+    const increaseBtn = document.getElementById("increaseQty");
+    const addToCartBtn = document.querySelector(".btn-agregar-carrito");
+
+    // Variables para controlar la cantidad
+    let cantidad = 1;
+
+    // Abrir modal con datos del producto
+    document.querySelectorAll(".btn-ver").forEach(btn => {
+        btn.addEventListener("click", () => {
+            // Resetear cantidad a 1 cada vez que se abre un producto
+            cantidad = 1;
+            cantidadValue.textContent = cantidad;
+            
+            // Cargar datos del producto
+            document.getElementById("modalImagen").src = btn.dataset.imagen;
+            document.getElementById("modalNombre").textContent = btn.dataset.nombre;
+            document.getElementById("modalDescripcion").textContent = btn.dataset.descripcion;
+            document.getElementById("modalPrecio").textContent = btn.dataset.precio;
+            document.getElementById("modalDisponibilidad").textContent = btn.dataset.disponibilidad;
+            document.getElementById("modalCategoria").textContent = btn.dataset.categoria;
+            
+            // Mostrar modal
+            modal.style.display = "block";
+            document.body.style.overflow = "hidden"; // Prevenir scroll
+        });
+    });
+
+    // Controladores de cantidad
+    decreaseBtn.addEventListener("click", () => {
+        if (cantidad > 1) {
+            cantidad--;
+            cantidadValue.textContent = cantidad;
+        }
+    });
+
+    increaseBtn.addEventListener("click", () => {
+        cantidad++;
+        cantidadValue.textContent = cantidad;
+    });
+
+    // Añadir al carrito
+    addToCartBtn.addEventListener("click", function() {
+        const producto = {
+            nombre: document.getElementById("modalNombre").textContent,
+            precio: document.getElementById("modalPrecio").textContent,
+            cantidad: cantidad,
+            imagen: document.getElementById("modalImagen").src
+        };
+        
+        // Aquí puedes agregar la lógica para añadir al carrito
+        console.log("Producto añadido al carrito:", producto);
+        
+        // Mostrar mensaje de confirmación
+        const originalText = this.innerHTML;
+        this.innerHTML = '<i class="fas fa-check"></i> Añadido al Carrito';
+        this.style.background = '#4CAF50';
+        
+        setTimeout(() => {
+            this.innerHTML = originalText;
+            this.style.background = '#ff5252';
+        }, 2000);
+        
+        // Cerrar modal después de añadir (opcional)
+        // setTimeout(() => modal.style.display = "none", 2000);
+    });
+
+    // Cerrar modal
+    closeModal.addEventListener("click", () => {
+        modal.style.display = "none";
+        document.body.style.overflow = "auto"; // Restaurar scroll
+    });
+    
+    window.addEventListener("click", e => { 
+        if (e.target === modal) {
+            modal.style.display = "none";
+            document.body.style.overflow = "auto"; // Restaurar scroll
+        }
+    });
+
+    // Cerrar modal con tecla ESC
+    document.addEventListener("keydown", e => {
+        if (e.key === "Escape" && modal.style.display === "block") {
+            modal.style.display = "none";
+            document.body.style.overflow = "auto"; // Restaurar scroll
+        }
+    });
+});
+
+// Función para copiar cupón (ya existente)
+function copiarCupon() {
+    const cupon = "ROCK25";
+    navigator.clipboard.writeText(cupon).then(() => {
+        alert("Cupón copiado: " + cupon);
+    }).catch(err => {
+        console.error('Error al copiar: ', err);
+    });
+}
+
 //Estilo para resaltar búsqueda
 const style = document.createElement('style');
 style.textContent = `
@@ -112,3 +217,4 @@ style.textContent = `
     }
 `;
 document.head.appendChild(style);
+

@@ -2086,3 +2086,350 @@ footer {
         padding: 25px 15px;
     }
 }
+/* ===== Modal Styles ===== */
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    background-color: rgba(0, 0, 0, 0.8);
+}
+
+.modal-content {
+    background-color: #111;
+    color: white;
+    margin: 5% auto;
+    padding: 20px;
+    border-radius: 12px;
+    width: 80%;
+    max-width: 700px;
+    position: relative;
+    box-shadow: 0 0 20px rgba(255, 255, 255, 0.2);
+}
+
+.close {
+    color: #fff;
+    position: absolute;
+    top: 10px;
+    right: 20px;
+    font-size: 28px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.modal-img {
+    width: 100%;
+    border-radius: 10px;
+    margin-bottom: 15px;
+}
+
+.modal h2 {
+    margin-bottom: 10px;
+    color: #00bfff;
+}
+
+.modal p {
+    margin: 6px 0;
+}
+
+.modal strong {
+    color: #ffd700;
+}
+
+.btn-ver {
+    background-color: #8a2be2;
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: 0.3s;
+    font-family: 'Playfair Display', serif;
+    width: 100%;
+    margin-top: 10px;
+}
+
+.btn-ver:hover {
+    background-color: #5e1cad;
+}
+
+/* ===== Modal Styles ===== */
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    background-color: rgba(0, 0, 0, 0.8);
+    backdrop-filter: blur(5px);
+}
+
+.modal-content {
+    background-color: #1a1a1a;
+    color: white;
+    margin: 5% auto;
+    padding: 30px;
+    border-radius: 15px;
+    width: 85%;
+    max-width: 900px;
+    position: relative;
+    box-shadow: 0 0 30px rgba(255, 82, 82, 0.3);
+    border: 1px solid #333;
+}
+
+.close {
+    color: #fff;
+    position: absolute;
+    top: 15px;
+    right: 25px;
+    font-size: 35px;
+    font-weight: bold;
+    cursor: pointer;
+    z-index: 10;
+    transition: color 0.3s;
+}
+
+.close:hover {
+    color: #ff5252;
+}
+
+.modal-producto-container {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 40px;
+    align-items: center; /* Esto centra verticalmente ambos lados */
+    min-height: 500px; /* Altura mínima para mejor centrado */
+}
+
+.modal-imagen-container {
+    position: relative;
+    display: flex;
+    align-items: center; /* Centra verticalmente */
+    justify-content: center; /* Centra horizontalmente */
+    height: 100%;
+}
+
+.modal-img {
+    width: 100%;
+    max-width: 400px;
+    border-radius: 12px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+    object-fit: cover;
+}
+
+.modal-info-container {
+    padding: 10px 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: center; /* Centra el contenido verticalmente */
+    height: 100%;
+}
+
+.modal-info-container h2 {
+    color: #fff;
+    font-size: 2.2rem;
+    margin-bottom: 20px;
+    font-family: 'Momo Trust Display', serif;
+    font-weight: 700;
+    line-height: 1.2;
+}
+
+.modal-precio {
+    color: #ff5252;
+    font-size: 2rem;
+    font-weight: bold;
+    margin-bottom: 15px;
+    font-family: 'Playfair Display', serif;
+}
+
+.modal-disponibilidad {
+    color: #4CAF50;
+    font-weight: 600;
+    margin-bottom: 10px;
+    font-size: 1.1rem;
+}
+
+.modal-categoria {
+    color: #ccc;
+    margin-bottom: 25px;
+    font-size: 1rem;
+}
+
+.cantidad-selector {
+    margin: 25px 0;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.cantidad-selector span {
+    color: #fff;
+    font-weight: 600;
+    font-size: 1.1rem;
+}
+
+.cantidad-controls {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    background: #0a0a0a;
+    padding: 8px 15px;
+    border-radius: 25px;
+    border: 1px solid #333;
+}
+
+.btn-cantidad {
+    background: #ff5252;
+    color: white;
+    border: none;
+    width: 35px;
+    height: 35px;
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 1.2rem;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s;
+}
+
+.btn-cantidad:hover {
+    background: #e04141;
+    transform: scale(1.1);
+}
+
+.cantidad-value {
+    color: #fff;
+    font-size: 1.3rem;
+    font-weight: bold;
+    min-width: 30px;
+    text-align: center;
+    font-family: 'Playfair Display', serif;
+}
+
+.btn-agregar-carrito {
+    background: #ff5252;
+    color: white;
+    border: none;
+    padding: 18px 30px;
+    border-radius: 25px;
+    cursor: pointer;
+    font-weight: bold;
+    font-size: 1.1rem;
+    width: 100%;
+    transition: all 0.3s;
+    margin: 20px 0 30px 0;
+    font-family: 'Playfair Display', serif;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.btn-agregar-carrito:hover {
+    background: #e04141;
+    transform: translateY(-3px);
+    box-shadow: 0 5px 15px rgba(255, 82, 82, 0.4);
+}
+
+.modal-descripcion {
+    border-top: 1px solid #333;
+    padding-top: 25px;
+}
+
+.modal-descripcion h3 {
+    color: #fff;
+    font-size: 1.4rem;
+    margin-bottom: 15px;
+    font-family: 'Momo Trust Display', serif;
+}
+
+.modal-descripcion p {
+    color: #ccc;
+    line-height: 1.7;
+    font-size: 1.05rem;
+}
+
+.btn-ver {
+    background-color: #8a2be2;
+    color: white;
+    border: none;
+    padding: 12px 25px;
+    border-radius: 25px;
+    cursor: pointer;
+    transition: all 0.3s;
+    font-family: 'Playfair Display', serif;
+    width: 100%;
+    margin-top: 15px;
+    font-weight: 600;
+    font-size: 1rem;
+}
+
+.btn-ver:hover {
+    background-color: #5e1cad;
+    transform: translateY(-2px);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .modal-content {
+        width: 90%;
+        padding: 20px;
+        margin: 10% auto;
+    }
+    
+    .modal-producto-container {
+        grid-template-columns: 1fr;
+        gap: 25px;
+        min-height: auto;
+    }
+    
+    .modal-imagen-container {
+        height: auto;
+        min-height: 300px;
+    }
+    
+    .modal-info-container h2 {
+        font-size: 1.8rem;
+    }
+    
+    .modal-precio {
+        font-size: 1.6rem;
+    }
+    
+    .cantidad-selector {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+    }
+}
+
+@media (max-width: 480px) {
+    .modal-content {
+        width: 95%;
+        padding: 15px;
+    }
+    
+    .modal-info-container h2 {
+        font-size: 1.5rem;
+    }
+    
+    .btn-agregar-carrito {
+        padding: 15px 20px;
+        font-size: 1rem;
+    }
+    
+    .modal-imagen-container {
+        min-height: 250px;
+    }
+}
