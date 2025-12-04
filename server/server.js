@@ -92,6 +92,6 @@ app.use(express.static(clientDir));
 
 app.listen(PORT, () => {
   console.log(`🚀 Servidor en http://localhost:${PORT}`);
-  testConnection();
-  ensureCarritoNombreImagenColumn();
+  //testConnection();
+  //ensureCarritoNombreImagenColumn();
 });
