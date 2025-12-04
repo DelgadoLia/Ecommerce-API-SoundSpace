@@ -178,11 +178,31 @@
                             <input id="cuponInput" placeholder="Cupón" class="input">
                             <button onclick="aplicarCupon()">Usar cupón</button>
                         </div>
+                    </div>
 
+                    <div class="summary-details">
+                        <div class="summary-row">
+                            <span>Subtotal Productos:</span>
+                            <span id="summary-subtotal">$204.99</span>
                         </div>
+                        <div class="summary-row discount-row">
+                            <span>Descuento por Cupón:</span>
+                            <span id="summary-discount">-$20.50</span>
+                        </div>
+                        <div class="summary-row">
+                            <span>Impuestos (16%):</span>
+                            <span id="summary-tax">$29.52</span>
+                        </div>
+                        <div class="summary-row">
+                            <span>Gastos de Envío:</span>
+                            <span id="summary-shipping">$15.00</span>
+                        </div>
+                    </div>
 
-
-                    
+                    <div class="summary-total">
+                        <h3>Total General:</h3>
+                        <span id="summary-total-amount">$229.01</span>
+                    </div>
                     
                     <button id="btn-finalizar-pago" class="btn-submit btn-checkout">Finalizar Compra <i class="fas fa-arrow-right"></i></button>
                 </div>

@@ -180,7 +180,7 @@ exports.enviarNotaCompra = async (req, res) => {
     doc.text(`Impuestos (${(impuestoRate * 100).toFixed(0)}%): ${fmt(impuestos)}`, { align: 'right' });
     doc.text(`Gastos de Envío: ${fmt(gastosEnvio)}`, { align: 'right' });
     if (cuponNombre) {
-        doc.text(`Cupón: ${cuponNombre} (-${fmt(cuponAplicado)})`, { align: 'right' });
+      doc.text(`Cupón: ${cuponNombre} (-${fmt(cuponAplicado)})`, { align: 'right' });
     }
     doc.moveDown(0.2);
     doc.fontSize(12).text(`Total: ${fmt(total)}`, { align: 'right', underline: true });

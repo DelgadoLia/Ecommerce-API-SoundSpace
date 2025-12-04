@@ -5,16 +5,59 @@ document.addEventListener('DOMContentLoaded', () => {
         'modify': document.getElementById('modify-product-section')
     };
 
+    // ============ FUNCIÓN PARA OBTENER HEADERS CON TOKEN ============
+    function getAuthHeaders(includeContentType = true) {
+        const token = localStorage.getItem('token');
+        const headers = {};
+        
+        if (token) {
+            headers['Authorization'] = `Bearer ${token}`;
+        }
+        
+        if (includeContentType) {
+            headers['Content-Type'] = 'application/json';
+        }
+        
+        return headers;
+    }
+
+    // ============ VERIFICAR SI EL USUARIO ES ADMIN ============
+    function checkAdminAccess() {
+        const usuario = JSON.parse(localStorage.getItem('usuario'));
+        const token = localStorage.getItem('token');
+        
+        if (!usuario || !token || usuario.rol !== 'admin') {
+            Swal.fire({
+                title: 'Acceso denegado',
+                text: 'Debes ser administrador para acceder a esta página',
+                icon: 'error',
+                confirmButtonText: 'Ir al inicio',
+                showClass: {
+                    popup: 'animate__animated animate__zoomIn'
+                },
+                hideClass: {
+                    popup: 'animate__animated animate__zoomOut'
+                }
+            }).then(() => {
+                window.location.href = 'index.html';
+            });
+            return false;
+        }
+        return true;
+    }
+
+    // Verificar acceso al cargar la página
+    if (!checkAdminAccess()) {
+        return;
+    }
+
     // Manejo de pestañas (Alta / Modificar)
-    // - Cambia las clases para activar la vista correspondiente
     tabButtons.forEach(button => {
         button.addEventListener('click', (e) => {
-            // 1. Desactivar todos los botones y formularios
             tabButtons.forEach(btn => btn.classList.remove('active'));
             Object.values(forms).forEach(form => form.classList.remove('active'));
             Object.values(forms).forEach(form => form.classList.add('hidden'));
 
-            // 2. Activar el botón y el formulario correspondiente
             const targetTab = e.target.dataset.tab;
             e.target.classList.add('active');
             
@@ -26,67 +69,80 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
-    // Asegurar que la pestaña de Alta esté activa al inicio (carga por defecto)
     document.querySelector('.tab-btn[data-tab="add"]').click();
     
-    // Variables para cache y API
-    // - `cachedProducts` almacena los productos cargados desde la API para búsquedas y render
-    // - `apiOrigin` y `API_URL` determinan el origen de la API según cómo se sirva la página (file:// vs http)
     let cachedProducts = [];
     const apiOrigin = (location.protocol === 'file:') ? 'http://localhost:3000' : `${location.protocol}//${location.host}`;
-    // Inventario ahora via admin
     const API_URL = `${apiOrigin}/api/admin/inventario`;
     const FALLBACK_API_URL = 'http://localhost:3000/api/admin/inventario';
-    // Endpoint para ventas totales (suma monetaria)
     const TOTALSALES_API_URL = `${apiOrigin}/api/admin/totalventas`;
     const FALLBACK_TOTALSALES_API_URL = 'http://localhost:3000/api/admin/totalventas';
 
-    console.info('API origin:', apiOrigin, 'API_URL:', API_URL, 'FALLBACK_API_URL:', FALLBACK_API_URL); // Debug info
+    console.info('API origin:', apiOrigin, 'API_URL:', API_URL, 'FALLBACK_API_URL:', FALLBACK_API_URL);
 
-    // Cargar productos desde la API y actualizar tabla
-    // - Hace fetch a `API_URL`. Si falla (por ejemplo, si la página está siendo servida
-    //   por un servidor de desarrollo distinto a la API), intenta `FALLBACK_API_URL`.
-    // - Soporta respuestas donde la API devuelve un array directo, o un objeto { success, count, data }.
+    // ============ CARGAR PRODUCTOS (CON TOKEN) ============
     async function loadProducts() {
         const tbody = document.getElementById('inventory-body');
         if (!tbody) return;
-        // Mostrar fila de carga mientras se obtiene la información
-        tbody.innerHTML = '<tr class="loading-row"><td colspan="8">Cargando productos...</td></tr>';
+        
+        tbody.innerHTML = '<tr class="loading-row"><td colspan="9">Cargando productos...</td></tr>';
+        
         try {
-            let resp = await fetch(API_URL);
-            let data;
+            const headers = getAuthHeaders();
+            
+            let resp = await fetch(API_URL, { headers });
+            
             if (!resp.ok) {
-                // Si la respuesta falla (ej. 404 desde Live Server), intentar la URL de respaldo
                 console.warn(`API respondió con ${resp.status} desde ${API_URL}, intentando fallback ${FALLBACK_API_URL}`);
-                // Intentar fallback al backend en :3000
-                resp = await fetch(FALLBACK_API_URL);
+                resp = await fetch(FALLBACK_API_URL, { headers });
             }
-            if(!resp.ok) throw new Error(`HTTP ${resp.status}`);
-            data = await resp.json();
-            // La API puede devolver un array de productos, o un objeto con `data`.
-            if (!Array.isArray(data)) {
-                console.warn('Respuesta inesperada de productos:', data);
-                cachedProducts = data.data || [];
-            } else {
-                cachedProducts = data;
+            
+            if (!resp.ok) {
+                if (resp.status === 401 || resp.status === 403) {
+                    Swal.fire({
+                        title: 'Sesión expirada',
+                        text: 'Por favor, inicia sesión nuevamente',
+                        icon: 'warning',
+                        confirmButtonText: 'Continuar',
+                        showClass: {
+                            popup: 'animate__animated animate__zoomIn'
+                        },
+                        hideClass: {
+                            popup: 'animate__animated animate__zoomOut'
+                        }
+                    }).then(() => {
+                        localStorage.clear();
+                        window.location.href = 'index.html';
+                    });
+                    return;
+                }
+                throw new Error(`HTTP ${resp.status}`);
             }
+            
+            const data = await resp.json();
+            cachedProducts = Array.isArray(data) ? data : (data.data || []);
+            
             renderProductos(cachedProducts);
             updateMetrics(cachedProducts);
-            // Obtener ventas totales desde backend, preferir endpoint de admin
             fetchTotalSales();
         } catch (err) {
             console.error('Error cargando productos:', err);
-            tbody.innerHTML = '<tr><td colspan="8">Error cargando productos. Ver consola para detalles.</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="9">Error cargando productos. Ver consola para detalles.</td></tr>';
         }
     }
 
+    // ============ OBTENER VENTAS TOTALES (CON TOKEN) ============
     async function fetchTotalSales() {
         const totalSalesEl = document.getElementById("total-sales");
         if (!totalSalesEl) return;
+        
         try {
-            let resp = await fetch(TOTALSALES_API_URL);
-            if (!resp.ok) resp = await fetch(FALLBACK_TOTALSALES_API_URL);
+            const headers = getAuthHeaders();
+            
+            let resp = await fetch(TOTALSALES_API_URL, { headers });
+            if (!resp.ok) resp = await fetch(FALLBACK_TOTALSALES_API_URL, { headers });
             if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+            
             const data = await resp.json();
             if (data && data.success && data.total !== undefined) {
                 totalSalesEl.textContent = `$${Number(data.total).toLocaleString('es-MX', {minimumFractionDigits:2, maximumFractionDigits:2})}`;
@@ -99,33 +155,25 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-
-    // renderProductos: Dibuja filas <tr> y celdas <td> en la tabla de inventario
-    // - Se espera una lista de objetos producto con campos: id, titulo, artista, genero, precio, disponibilidad, ventas, imagen
-    // - Normaliza los nombres por si hay variantes en mayúsculas/minúsculas
     function renderProductos(productos) {
         const tbody = document.getElementById('inventory-body');
         if (!tbody) return;
+        
         if (!productos || productos.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="8">No se encontraron productos.</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="9">No se encontraron productos.</td></tr>';
             return;
         }
+        
         tbody.innerHTML = '';
         productos.forEach(producto => {
             const tr = document.createElement('tr');
             tr.dataset.id = producto.id || producto.ID || '';
 
-            // Normalizar precio y formatear como string monetario
             const priceValue = Number(producto.precio || producto.Precio || 0);
             const priceText = isNaN(priceValue) ? producto.precio : `$${priceValue.toFixed(2)}`;
-
-            // Normalizar valores de ventas y stock para evitar undefined
             const ventas = producto.ventas ?? producto.Ventas ?? 0;
             const stock = producto.disponibilidad ?? producto.Disponibilidad ?? 0;
-            // Normalizar oferta (descuento %)
             const oferta = producto.oferta ?? producto.Oferta ?? 0;
-
-            // Determinar clase CSS según el nivel de stock (alto, bajo, crítico)
             const stockClass = getStockClass(Number(stock));
 
             tr.innerHTML = `
@@ -143,18 +191,13 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // renderImageCell: retorna el HTML para la celda de imagen
-    // - Intenta cargar la imagen desde el origen actual y si falla, intenta cargarla desde el backend en localhost:3000
     function renderImageCell(imgName) {
         if (!imgName) return '';
-        // Se asume que las imágenes se sirven desde /uploads
         const src = `${apiOrigin}/uploads/${imgName}`;
-        // Devuelve una etiqueta <img> con tamaño reducido como vista previa; si falla se intenta cargar desde el backend
         const fallbackSrc = `http://localhost:3000/uploads/${imgName}`;
         return `<img src="${src}" alt="${imgName}" style="max-width:48px; height:auto;" onerror="this.onerror=null; this.src='${fallbackSrc}'"> ${imgName}`;
     }
 
-    // getStockClass: devuelve la clase CSS que marca visualmente el nivel de stock
     function getStockClass(stock) {
         if (isNaN(stock)) return '';
         if (stock <= 5) return 'stock-critical';
@@ -162,20 +205,18 @@ document.addEventListener('DOMContentLoaded', () => {
         return 'stock-high';
     }
 
-    // updateMetrics: actualiza los paneles de métricas (ventas totales e inventario total)
-    // - total-inventory: suma de la disponibilidad de todos los productos
-    // - total-sales: suma precio*ventas (valor monetario acumulado)
     function updateMetrics(productos) {
         const totalInventoryEl = document.getElementById('total-inventory');
         const totalSalesEl = document.getElementById('total-sales');
+        
         if (totalInventoryEl) {
             const totalStock = productos.reduce((acc, p) => acc + Number(p.disponibilidad ?? p.Disponibilidad ?? 0), 0);
             totalInventoryEl.textContent = totalStock;
         }
+        
         if (totalSalesEl) {
-            // Sumar ventas*precio para mostrar ventas totales en $ (valor monetario acumulado)
             const salesAmount = productos.reduce((acc, p) => {
-                const precio = Number(p.precio ?? p.precio ?? p.Precio ?? 0) || 0;
+                const precio = Number(p.precio ?? p.Precio ?? 0) || 0;
                 const ventas = Number(p.ventas || 0) || 0;
                 return acc + (precio * ventas);
             }, 0);
@@ -183,8 +224,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // Buscar en `cachedProducts` por título o ID
-    // Al pulsar el botón se filtran los productos en cache y se muestra el primer resultado
+    // ============ BÚSQUEDA ============
     const searchBtn = document.querySelector('.search-btn');
     if (searchBtn) {
         searchBtn.addEventListener('click', () => {
@@ -198,14 +238,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 return;
             }
 
-            // Priorizar búsqueda por ID exacto
-            let results = [];
-            // Buscar por ID exacto primero
-            results = cachedProducts.filter(p => {
+            let results = cachedProducts.filter(p => {
                 const idStr = String(p.id ?? p.ID ?? '');
                 return idStr === query;
             });
-            // Si no hay resultados por ID, buscar por título
+            
             if (results.length === 0) {
                 results = cachedProducts.filter(p => {
                     const title = (p.titulo ?? p.Titulo ?? '').toString().toLowerCase();
@@ -214,11 +251,9 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             if (results.length > 0) {
-                // Renderizar el primer resultado en el área de resultados
                 const resultItem = searchResults.querySelector('.result-item');
                 if (resultItem) {
                     const p = results[0];
-                    // Guardar el ID del producto en el dataset para acciones futuras (modificar/eliminar)
                     resultItem.dataset.id = p.id ?? p.ID ?? '';
                     console.info('search matched:', p.id ?? p.ID, p.titulo ?? p.Titulo);
                     resultItem.querySelector('.product-title-display').textContent = `Modificar: ${p.titulo || p.Titulo || ''}`;
@@ -229,9 +264,12 @@ document.addEventListener('DOMContentLoaded', () => {
                     resultItem.querySelector('#m-price').value = p.precio || '';
                     resultItem.querySelector('#m-stock').value = p.disponibilidad || '';
                     resultItem.querySelector('#m-image').value = p.imagen || '';
-                    // Seleccionar género si existe
+                    
                     const genreEl = resultItem.querySelector('#m-genre');
                     if (genreEl) genreEl.value = p.genero || '';
+                    
+                    const offerEl = resultItem.querySelector('#m-offer');
+                    if (offerEl) offerEl.value = p.oferta || '';
                 }
                 searchResults.classList.remove('hidden');
                 noResultsMessage.classList.add('hidden');
@@ -242,51 +280,39 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Cargar los productos desde la API cuando la página termine de inicializarse
-    // Esto llenará la tabla y las métricas automáticamente
     loadProducts();
 
-    // Simulación de acciones de CRUD 
-    // - `btn-add-product`: actualmente solo muestra una alerta; deberías llamar a POST /api/productos
-    // - `btn-update-product`: actualmente solo muestra una alerta; deberías llamar a PUT /api/productos/:id
-    // - `btn-delete-product`: actualmente solo muestra una alerta; deberías llamar a DELETE /api/productos/:id
+    // ============ AÑADIR PRODUCTO (CON TOKEN) ============
     const addBtn = document.querySelector('.btn-add-product');
     if (addBtn) {
-        addBtn.addEventListener('click', (e) => {
-        console.info('btn-add-product clicked');
-        e.preventDefault();
+        addBtn.addEventListener('click', async (e) => {
+            console.info('btn-add-product clicked');
+            e.preventDefault();
 
-        // Obtener los valores del formulario de alta
-        const form = document.getElementById('add-product-form');
-        if (!form) {
-            console.error('Formulario de alta no encontrado (id: add-product-form)');
-            return;
-        }
+            const form = document.getElementById('add-product-form');
+            if (!form) {
+                console.error('Formulario de alta no encontrado (id: add-product-form)');
+                return;
+            }
 
-        // 1. Crear el objeto FormData que encapsula el formulario y los archivos
-        const formData = new FormData();
-        
-        // Obtener la referencia al input type="file"
-        const imageFileEl = form.querySelector('#p-image-file'); // Asegúrate de usar el ID correcto
-        const imageFile = imageFileEl ? imageFileEl.files[0] : null;
+            const formData = new FormData();
+            const imageFileEl = form.querySelector('#p-image-file');
+            const imageFile = imageFileEl ? imageFileEl.files[0] : null;
 
-        // Usar los IDs reales del HTML (p- prefix)
-        const titulo = form.querySelector('#p-title') ? form.querySelector('#p-title').value.trim() : '';
-        const artista = form.querySelector('#p-artist') ? form.querySelector('#p-artist').value.trim() : '';
-        const descripcion = form.querySelector('#p-description') ? form.querySelector('#p-description').value.trim() : '';
-        const precio = form.querySelector('#p-price') ? form.querySelector('#p-price').value.trim() : '';
-        const disponibilidad = form.querySelector('#p-stock') ? form.querySelector('#p-stock').value.trim() : '';
-        const genero = form.querySelector('#p-genre') ? form.querySelector('#p-genre').value.trim() : '';
-        // `ventas` no está presente en el formulario de alta; usar 0 por defecto
-        const ventas = 0;
-        const imagen = form.querySelector('#p-image') ? form.querySelector('#p-image').value.trim() : '';
-        const oferta = form.querySelector('#p-offer') ? form.querySelector('#p-offer').value.trim() : '';
+            const titulo = form.querySelector('#p-title') ? form.querySelector('#p-title').value.trim() : '';
+            const artista = form.querySelector('#p-artist') ? form.querySelector('#p-artist').value.trim() : '';
+            const descripcion = form.querySelector('#p-description') ? form.querySelector('#p-description').value.trim() : '';
+            const precio = form.querySelector('#p-price') ? form.querySelector('#p-price').value.trim() : '';
+            const disponibilidad = form.querySelector('#p-stock') ? form.querySelector('#p-stock').value.trim() : '';
+            const genero = form.querySelector('#p-genre') ? form.querySelector('#p-genre').value.trim() : '';
+            const ventas = 0;
+            const imagen = form.querySelector('#p-image') ? form.querySelector('#p-image').value.trim() : '';
+            const oferta = form.querySelector('#p-offer') ? form.querySelector('#p-offer').value.trim() : '';
 
-        const hasImage = imageFile || imagen; // Verifica si existe el archivo O si se llenó el campo de texto (legacy)
+            const hasImage = imageFile || imagen;
 
-        // Validar que los campos de texto estén llenos, y que exista una imagen (sea archivo o URL de texto)
-        if (!titulo || !artista || !descripcion || !precio || !disponibilidad || !genero || !hasImage) {
-            Swal.fire({
+            if (!titulo || !artista || !descripcion || !precio || !disponibilidad || !genero || !hasImage) {
+                Swal.fire({
                     title: 'Datos incompletos',
                     text: 'Por favor, completa todos los campos antes de añadir el producto',
                     icon: 'warning',
@@ -298,36 +324,27 @@ document.addEventListener('DOMContentLoaded', () => {
                         popup: 'animate__animated animate__zoomOut'
                     }
                 });
-            return;
-        }
+                return;
+            }
 
-        // 2. Añadir todos los campos, incluyendo el archivo, al FormData
-        formData.append('title', titulo); // Nota: Multer puede usar los nombres del form
-        formData.append('titulo', titulo);
-        formData.append('artista', artista);
-        formData.append('descripcion', descripcion);
-        formData.append('precio', precio);
-        formData.append('disponibilidad', disponibilidad);
-        formData.append('genero', genero);
-        formData.append('oferta', oferta);
-        formData.append('ventas', 0); // Fijo a 0 en alta
+            formData.append('title', titulo);
+            formData.append('titulo', titulo);
+            formData.append('artista', artista);
+            formData.append('descripcion', descripcion);
+            formData.append('precio', precio);
+            formData.append('disponibilidad', disponibilidad);
+            formData.append('genero', genero);
+            formData.append('oferta', oferta);
+            formData.append('ventas', 0);
 
-        // ¡Añadir el archivo con el nombre que espera Multer!
-        // El nombre 'imageFile' debe coincidir con el .single('imageFile') en la ruta del backend
-        formData.append('imageFile', imageFile);
-        // Si el usuario completó el campo de texto con el nombre de la imagen,
-        // incluirlo para que el backend lo use como nombre final de archivo
-        if (imagen) formData.append('imagen', imagen);
+            formData.append('imageFile', imageFile);
+            if (imagen) formData.append('imagen', imagen);
 
-        // Construir payload y URLs
-        const fallbackAdminUrl = `http://localhost:3000/api/admin/inventario`;
-
-        // 3. Llamar a la nueva función de fetch con FormData
-        addProductFormDataFetch(`${apiOrigin}/api/admin/inventario`, fallbackAdminUrl, formData);        
+            const fallbackAdminUrl = `http://localhost:3000/api/admin/inventario`;
+            addProductFormDataFetch(`${apiOrigin}/api/admin/inventario`, fallbackAdminUrl, formData);
         });
     }
 
-    // Manejar submit del formulario (tecla Enter) fuera del click para evitar listeners duplicados
     const addForm = document.getElementById('add-product-form');
     if (addForm) {
         addForm.addEventListener('submit', (e) => {
@@ -337,11 +354,13 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    // ============ ACTUALIZAR PRODUCTO (CON TOKEN) ============
     const updateBtn = document.querySelector('.btn-update-product');
     if (updateBtn) {
         updateBtn.addEventListener('click', async () => {
             const resultItem = document.querySelector('#search-results .result-item');
             const id = resultItem?.dataset.id;
+            
             if (!id) {
                 Swal.fire({
                     title: 'No se encontró el ID del producto para modificar',
@@ -354,9 +373,10 @@ document.addEventListener('DOMContentLoaded', () => {
                     hideClass: {
                         popup: 'animate__animated animate__zoomOut'
                     }
-                    });
+                });
                 return;
             }
+            
             const form = resultItem.querySelector('.update-form');
             if (!form) {
                 Swal.fire({
@@ -370,9 +390,10 @@ document.addEventListener('DOMContentLoaded', () => {
                     hideClass: {
                         popup: 'animate__animated animate__zoomOut'
                     }
-                    });
+                });
                 return;
             }
+
             const tituloVal = (form.querySelector('#m-title')?.value ?? '').trim();
             const artistaVal = (form.querySelector('#m-artist')?.value ?? '').trim();
             const descripcionVal = (form.querySelector('#m-description')?.value ?? '').trim();
@@ -381,11 +402,9 @@ document.addEventListener('DOMContentLoaded', () => {
             const generoVal = (form.querySelector('#m-genre')?.value ?? '').trim();
             const imagenVal = (form.querySelector('#m-image')?.value ?? '').trim();
             const ofertaVal = (form.querySelector('#m-offer')?.value ?? '').trim();
-            // Ventas (si existe en el DOM como input o span, preferir input)
             const ventasEl = form.querySelector('#m-sales') || form.querySelector('.sales-value-display');
             const ventas = ventasEl ? Number(ventasEl.value ?? ventasEl.textContent ?? 0) : 0;
 
-            // Validar que haya algún campo para actualizar (al menos titulo o precio por ejemplo)
             if (!tituloVal && !artistaVal && !descripcionVal && !precioVal && !disponibilidadVal && !generoVal && !imagenVal && !ofertaVal) {
                 Swal.fire({
                     title: 'Modificación vacía',
@@ -398,7 +417,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     hideClass: {
                         popup: 'animate__animated animate__zoomOut'
                     }
-                    });
+                });
                 return;
             }
 
@@ -416,69 +435,88 @@ document.addEventListener('DOMContentLoaded', () => {
 
             const primary = `${apiOrigin}/api/admin/inventario/${id}`;
             const fallback = `http://localhost:3000/api/admin/inventario/${id}`;
+            
             try {
-                // Si se seleccionó un archivo, enviamos FormData (para permitir subir nueva imagen)
                 const imageFileEl = form.querySelector('#m-image-file');
                 const imageFile = imageFileEl ? imageFileEl.files[0] : null;
+                const token = localStorage.getItem('token');
                 let resp;
+
                 if (imageFile) {
                     console.info('Actualizando producto con imagen (FormData)', id, payload);
                     const formData = new FormData();
-                    // Añadir solo los campos definidos para no sobrescribir con undefined
                     Object.keys(payload).forEach(k => {
                         const v = payload[k];
                         if (typeof v !== 'undefined') formData.append(k, v);
                     });
                     formData.append('imageFile', imageFile);
-                    resp = await fetch(primary, { method: 'PUT', body: formData });
+                    
+                    resp = await fetch(primary, {
+                        method: 'PUT',
+                        headers: { 'Authorization': `Bearer ${token}` },
+                        body: formData
+                    });
+                    
                     if (!resp.ok) {
                         console.warn(`PUT (FormData) respondió ${resp.status} en primary, intentando fallback`);
-                        resp = await fetch(fallback, { method: 'PUT', body: formData });
+                        resp = await fetch(fallback, {
+                            method: 'PUT',
+                            headers: { 'Authorization': `Bearer ${token}` },
+                            body: formData
+                        });
                     }
                 } else {
                     console.info('Actualizando producto (JSON)', id, payload);
+                    const headers = getAuthHeaders();
                     resp = await fetch(primary, {
                         method: 'PUT',
-                        headers: { 'Content-Type': 'application/json' },
+                        headers,
                         body: JSON.stringify(payload)
                     });
+                    
                     if (!resp.ok) {
                         console.warn(`PUT respondió ${resp.status} en primary, intentando fallback`);
-                        resp = await fetch(fallback, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+                        resp = await fetch(fallback, {
+                            method: 'PUT',
+                            headers,
+                            body: JSON.stringify(payload)
+                        });
                     }
                 }
+
                 if (!resp.ok) {
                     const text = await resp.text();
                     throw new Error(`HTTP ${resp.status} - ${text}`);
                 }
+                
                 const data = await resp.json();
                 if (data && data.success) {
                     Swal.fire({
-                    title: 'Producto modificado',
-                    text: 'Se realizo la accion exitosamente',
-                    icon: 'success',
-                    confirmButtonText: 'Continuar',
-                    showClass: {
-                        popup: 'animate__animated animate__zoomIn'
-                    },
-                    hideClass: {
-                        popup: 'animate__animated animate__zoomOut'
-                    }
+                        title: 'Producto modificado',
+                        text: 'Se realizo la accion exitosamente',
+                        icon: 'success',
+                        confirmButtonText: 'Continuar',
+                        showClass: {
+                            popup: 'animate__animated animate__zoomIn'
+                        },
+                        hideClass: {
+                            popup: 'animate__animated animate__zoomOut'
+                        }
                     });
                     loadProducts();
                     document.getElementById('search-results').classList.add('hidden');
                 } else {
                     Swal.fire({
-                    title: 'No se pudo modificar el producto',
-                    text: 'Por favor, intentelo de nuevo',
-                    icon: 'error',
-                    confirmButtonText: 'Continuar',
-                    showClass: {
-                        popup: 'animate__animated animate__zoomIn'
-                    },
-                    hideClass: {
-                        popup: 'animate__animated animate__zoomOut'
-                    }
+                        title: 'No se pudo modificar el producto',
+                        text: 'Por favor, intentelo de nuevo',
+                        icon: 'error',
+                        confirmButtonText: 'Continuar',
+                        showClass: {
+                            popup: 'animate__animated animate__zoomIn'
+                        },
+                        hideClass: {
+                            popup: 'animate__animated animate__zoomOut'
+                        }
                     });
                 }
             } catch (err) {
@@ -494,18 +532,37 @@ document.addEventListener('DOMContentLoaded', () => {
                     hideClass: {
                         popup: 'animate__animated animate__zoomOut'
                     }
-                    });
+                });
             }
         });
     }
 
-    // DELETE product handler: envia DELETE al backend con fallback y actualiza tabla
+    // ============ ELIMINAR PRODUCTO (CON TOKEN) ============
     const deleteBtn = document.querySelector('.btn-delete-product');
     if (deleteBtn) {
         deleteBtn.addEventListener('click', async () => {
-            if (!confirm('¿Estás seguro de que deseas dar de baja este producto?')) return;
+            const confirmResult = await Swal.fire({
+                title: '¿Estás seguro?',
+                text: '¿Deseas dar de baja este producto?',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonText: 'Sí, eliminar',
+                cancelButtonText: 'Cancelar',
+                confirmButtonColor: '#d33',
+                cancelButtonColor: '#3085d6',
+                showClass: {
+                    popup: 'animate__animated animate__zoomIn'
+                },
+                hideClass: {
+                    popup: 'animate__animated animate__zoomOut'
+                }
+            });
+            
+            if (!confirmResult.isConfirmed) return;
+            
             const resultItem = document.querySelector('#search-results .result-item');
             const id = resultItem?.dataset.id;
+            
             if (!id) {
                 Swal.fire({
                     title: 'No se encontró el ID del producto para eliminar',
@@ -519,50 +576,53 @@ document.addEventListener('DOMContentLoaded', () => {
                         popup: 'animate__animated animate__zoomOut'
                     }
                 });
-                
                 return;
             }
+
             const primary = `${apiOrigin}/api/admin/inventario/${id}`;
             const fallback = `http://localhost:3000/api/admin/inventario/${id}`;
+            const headers = getAuthHeaders();
+            
             try {
-                let resp = await fetch(primary, { method: 'DELETE' });
+                let resp = await fetch(primary, { method: 'DELETE', headers });
                 if (!resp.ok) {
                     console.warn(`DELETE respondió ${resp.status} en primary, intentando fallback`);
-                    resp = await fetch(fallback, { method: 'DELETE' });
+                    resp = await fetch(fallback, { method: 'DELETE', headers });
                 }
                 if (!resp.ok) {
                     const text = await resp.text();
                     throw new Error(`HTTP ${resp.status} - ${text}`);
                 }
+                
                 const data = await resp.json();
                 if (data && data.success) {
                     Swal.fire({
-                    title: 'Producto eliminado',
-                    text: 'Se realizo la accion correctamente',
-                    icon: 'success',
-                    confirmButtonText: 'Continuar',
-                    showClass: {
-                        popup: 'animate__animated animate__zoomIn'
-                    },
-                    hideClass: {
-                        popup: 'animate__animated animate__zoomOut'
-                    }
-                });
+                        title: 'Producto eliminado',
+                        text: 'Se realizo la accion correctamente',
+                        icon: 'success',
+                        confirmButtonText: 'Continuar',
+                        showClass: {
+                            popup: 'animate__animated animate__zoomIn'
+                        },
+                        hideClass: {
+                            popup: 'animate__animated animate__zoomOut'
+                        }
+                    });
                     document.getElementById('search-results').classList.add('hidden');
                     loadProducts();
                 } else {
                     Swal.fire({
-                    title: 'No se pudo eliminar el producto',
-                    text: 'Por favor, intentelo de nuevo',
-                    icon: 'error',
-                    confirmButtonText: 'Continuar',
-                    showClass: {
-                        popup: 'animate__animated animate__zoomIn'
-                    },
-                    hideClass: {
-                        popup: 'animate__animated animate__zoomOut'
-                    }
-                });
+                        title: 'No se pudo eliminar el producto',
+                        text: 'Por favor, intentelo de nuevo',
+                        icon: 'error',
+                        confirmButtonText: 'Continuar',
+                        showClass: {
+                            popup: 'animate__animated animate__zoomIn'
+                        },
+                        hideClass: {
+                            popup: 'animate__animated animate__zoomOut'
+                        }
+                    });
                 }
             } catch (err) {
                 console.error('Error eliminando producto:', err);
@@ -582,24 +642,27 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Nueva función para enviar FormData (archivos)
+    // ============ FUNCIÓN AUXILIAR PARA AÑADIR CON FORMDATA (CON TOKEN) ============
     async function addProductFormDataFetch(primary, fallback, formData) {
         try {
             console.info('Intentando añadir producto (FormData) en:', primary);
+            const token = localStorage.getItem('token');
             
             let resp = await fetch(primary, {
                 method: 'POST',
-                // NO se establece Content-Type para FormData. El navegador lo hace automáticamente.
-                body: formData 
+                headers: { 'Authorization': `Bearer ${token}` },
+                body: formData
             });
 
             if (!resp.ok) {
                 console.warn(`Respuesta ${resp.status} desde ${primary}, intentando fallback ${fallback}`);
                 resp = await fetch(fallback, {
                     method: 'POST',
+                    headers: { 'Authorization': `Bearer ${token}` },
                     body: formData
                 });
             }
+
             if (!resp.ok) {
                 const text = await resp.text();
                 throw new Error(`HTTP ${resp.status} - ${text}`);
@@ -614,9 +677,20 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             if (data && data.success) {
-                alert('Producto añadido correctamente.');
+                Swal.fire({
+                    title: 'Producto añadido',
+                    text: 'Se realizo la accion exitosamente',
+                    icon: 'success',
+                    confirmButtonText: 'Continuar',
+                    showClass: {
+                        popup: 'animate__animated animate__zoomIn'
+                    },
+                    hideClass: {
+                        popup: 'animate__animated animate__zoomOut'
+                    }
+                });
                 loadProducts();
-                document.getElementById('add-product-form').reset(); // Limpiar el formulario
+                document.getElementById('add-product-form').reset();
             } else {
                 alert('Error al añadir el producto: ' + (data.message || 'Respuesta inesperada.'));
             }
