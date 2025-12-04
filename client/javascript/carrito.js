@@ -11,6 +11,8 @@
     const fallbackBase = 'http://localhost:3000/api/carrito';
     const cuponesBase = `${apiOrigin}/api/cupones`;
     const fallbackCuponesBase = 'http://localhost:3000/api/cupones';
+    const tarifasBase = `${apiOrigin}/api/tarifas`;
+    const fallbackTarifasBase = 'http://localhost:3000/api/tarifas';
 
     // Variable global para almacenar el descuento del cupón
     let cuponActual = {
@@ -18,6 +20,13 @@
         descuento: 0,
         id: null,
         aplicado: false
+    };
+
+    // Variables globales para tarifas del usuario
+    let tarifasUsuario = {
+        impuesto: 16, // Por defecto México
+        envio: 15.00,
+        pais: 'México'
     };
 
     document.addEventListener('DOMContentLoaded', () => {
@@ -34,7 +43,22 @@
         }
 
         const usuarioId = usuario.id;
+        
+        // Cargar tarifas del usuario primero
+        await loadUserTarifas();
+        console.log('✅ Tarifas cargadas, ahora cargando carrito...');
+        
+        // Luego cargar items del carrito
         await loadCartItems(usuarioId);
+        console.log('✅ Carrito cargado, actualizando resumen...');
+        
+        // Forzar actualización del resumen con las tarifas cargadas
+        const subtotalEls = document.querySelectorAll('.subtotal-col');
+        let sum = 0;
+        subtotalEls.forEach(el => {
+            sum += Number(el.dataset.subtotal) || 0;
+        });
+        updateSummary(sum);
 
         const btnFinalizar = document.getElementById('btn-finalizar-pago');
         if (btnFinalizar) {
@@ -50,6 +74,9 @@
                 if (cuponActual.aplicado && cuponActual.codigo) {
                     localStorage.setItem('cuponAplicado', JSON.stringify(cuponActual));
                 }
+                
+                // Guardar tarifas para la página de compra
+                localStorage.setItem('tarifasUsuario', JSON.stringify(tarifasUsuario));
                 
                 window.location.href = 'compra.html';
             });
@@ -111,6 +138,73 @@
         
         // Resetear resumen cuando no hay productos
         updateSummary(0);
+    }
+
+    // Función para cargar las tarifas del usuario según su país
+    async function loadUserTarifas() {
+        const token = localStorage.getItem('token');
+        if (!token) {
+            console.warn('⚠️ No hay token disponible');
+            return;
+        }
+
+        const url = `${tarifasBase}/usuario`;
+        
+        try {
+            console.log('📊 Cargando tarifas del usuario desde:', url);
+            console.log('🔑 Token:', token.substring(0, 20) + '...');
+            
+            const headers = {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            };
+            
+            let resp = await fetch(url, { headers });
+            console.log('📡 Respuesta inicial:', resp.status, resp.statusText);
+            
+            if (!resp.ok && url !== `${fallbackTarifasBase}/usuario`) {
+                console.log('⚠️ Intentando fallback...');
+                resp = await fetch(`${fallbackTarifasBase}/usuario`, { headers });
+                console.log('📡 Respuesta fallback:', resp.status, resp.statusText);
+            }
+            
+            if (!resp.ok) {
+                const errorText = await resp.text();
+                console.warn(`⚠️ Error HTTP ${resp.status}: ${errorText}`);
+                console.warn('⚠️ No se pudieron cargar tarifas, usando valores por defecto');
+                return; // Mantener valores por defecto
+            }
+            
+            const data = await resp.json();
+            console.log('📦 Datos recibidos:', data);
+            
+            if (data.success && data.data) {
+                const impuestoValue = Number(data.data.impuesto) || 16;
+                // Si el valor es > 1, asumir que es porcentaje (ej: 16), si no es decimal (ej: 0.16)
+                const impuestoPorcentaje = impuestoValue > 1 ? impuestoValue : impuestoValue * 100;
+                
+                tarifasUsuario = {
+                    impuesto: impuestoPorcentaje,
+                    envio: Number(data.data.envio) || 15.00,
+                    pais: data.data.pais || 'México'
+                };
+                
+                console.log('✅ Tarifas cargadas correctamente:', tarifasUsuario);
+                
+                // Actualizar etiqueta del impuesto en el resumen
+                const taxLabel = document.querySelector('.summary-row:nth-child(3) span:first-child');
+                if (taxLabel) {
+                    taxLabel.textContent = `Impuestos (${tarifasUsuario.impuesto}%):`;
+                }
+            } else {
+                console.warn('⚠️ Respuesta sin datos válidos:', data);
+            }
+            
+        } catch (err) {
+            console.error('❌ Error cargando tarifas:', err);
+            console.error('Stack:', err.stack);
+            // Mantener valores por defecto
+        }
     }
 
     async function loadCartItems(usuarioId) {
@@ -470,11 +564,11 @@
         // Subtotal después del descuento
         const subtotalConDescuento = Math.max(0, subtotal - couponDiscount);
         
-        // IVA 16% (aplicado después del descuento)
-        const tax = subtotalConDescuento * 0.16;
+        // IVA usando la tarifa del país del usuario
+        const tax = subtotalConDescuento * (tarifasUsuario.impuesto / 100);
         
-        // Envío (gratis si el carrito está vacío)
-        const shipping = subtotal > 0 ? 15.00 : 0.00;
+        // Envío usando la tarifa del país del usuario (gratis si el carrito está vacío)
+        const shipping = subtotal > 0 ? tarifasUsuario.envio : 0.00;
         
         // Total final
         const total = subtotalConDescuento + tax + shipping;
@@ -483,7 +577,7 @@
         if (elDiscount) {
             const discountRow = elDiscount.closest('.summary-row');
             if (couponDiscount > 0) {
-                elDiscount.textContent = `-$${couponDiscount.toFixed(2)}`;
+                elDiscount.textContent = `-${couponDiscount.toFixed(2)}`;
                 if (discountRow) {
                     discountRow.style.display = 'flex';
                     discountRow.classList.add('discount-active');
@@ -498,15 +592,15 @@
         }
         
         if (elTax) {
-            elTax.textContent = `$${tax.toFixed(2)}`;
+            elTax.textContent = `${tax.toFixed(2)}`;
         }
         
         if (elShipping) {
-            elShipping.textContent = subtotal > 0 ? `$${shipping.toFixed(2)}` : 'Gratis';
+            elShipping.textContent = subtotal > 0 ? `${shipping.toFixed(2)}` : 'Gratis';
         }
         
         if (elTotal) {
-            elTotal.textContent = `$${total.toFixed(2)}`;
+            elTotal.textContent = `${total.toFixed(2)}`;
         }
 
         // Guardar en localStorage para usar en compra.html
@@ -517,7 +611,9 @@
             shipping: shipping.toFixed(2),
             total: total.toFixed(2),
             cupon: cuponActual.aplicado ? cuponActual.codigo : null,
-            descuentoPorcentaje: cuponActual.aplicado ? cuponActual.descuento : 0
+            descuentoPorcentaje: cuponActual.aplicado ? cuponActual.descuento : 0,
+            impuesto: tarifasUsuario.impuesto,
+            pais: tarifasUsuario.pais
         }));
     }
 

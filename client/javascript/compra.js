@@ -218,7 +218,22 @@ document.addEventListener('DOMContentLoaded', () => {
 
         let subtotal = 0;
         let discount = 0;
-        const shipping = 15.0;
+        
+        // Cargar tarifas del usuario desde localStorage
+        const tarifasGuardadas = JSON.parse(localStorage.getItem('tarifasUsuario'));
+        let tarifas = tarifasGuardadas || {
+            impuesto: 16,
+            envio: 15.00,
+            pais: 'México'
+        };
+        
+        // Asegurar que el impuesto sea un porcentaje
+        if (tarifas.impuesto) {
+            const impuestoValue = Number(tarifas.impuesto);
+            tarifas.impuesto = impuestoValue > 1 ? impuestoValue : impuestoValue * 100;
+        }
+        
+        console.log('📊 Tarifas del usuario:', tarifas);
 
         const usuario = JSON.parse(localStorage.getItem('usuario')) || null;
         console.log('👤 Usuario:', usuario);
@@ -340,18 +355,30 @@ document.addEventListener('DOMContentLoaded', () => {
                         <i class="fas fa-tag"></i> Cupón "${cuponCodigo}" aplicado
                     </div>
                 ` : ''}
+                ${tarifas.pais ? `
+                    <div style="background: rgba(33, 150, 243, 0.1); border: 1px solid rgba(33, 150, 243, 0.3); border-radius: 5px; padding: 8px 12px; margin: 10px 0; font-size: 13px; color: #1976d2;">
+                        <i class="fas fa-globe"></i> Envío a: ${tarifas.pais}
+                    </div>
+                ` : ''}
                 <a href="carrito.html" class="btn-edit-cart">
                     <i class="fas fa-edit"></i> Editar Carrito
                 </a>
             `;
 
-            // Calcular totales finales
+            // Calcular totales finales con tarifas del país
             const subtotalConDescuento = Math.max(0, subtotal - cuponDescuento);
-            const tax = subtotalConDescuento * 0.16;
+            const tax = subtotalConDescuento * (tarifas.impuesto / 100);
+            const shipping = tarifas.envio;
             const total = subtotalConDescuento + tax + shipping;
 
             // Actualizar elementos del resumen
             if (subtotalEl) subtotalEl.textContent = formatCurrency(subtotal);
+            
+            // Actualizar etiqueta del impuesto
+            const taxLabel = document.querySelector('.summary-row:nth-child(3) span:first-child');
+            if (taxLabel) {
+                taxLabel.textContent = `Impuestos (${tarifas.impuesto}%):`;
+            }
             
             if (discountEl) {
                 const discountRow = discountEl.closest('.summary-row');
@@ -380,7 +407,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 subtotalConDescuento,
                 tax, 
                 shipping, 
-                total 
+                total,
+                impuesto: tarifas.impuesto,
+                pais: tarifas.pais
             });
 
             updateFinalizeButton();
@@ -512,6 +541,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
             // Obtener información del cupón aplicado (si existe)
             const cuponAplicado = JSON.parse(localStorage.getItem("cuponAplicado"));
+            
+            // Obtener tarifas del usuario
+            const tarifasUsuario = JSON.parse(localStorage.getItem("tarifasUsuario"));
+            
             const pais = document.getElementById("pais") ? document.getElementById("pais").value : "México";
             
             const apiOrigin = (location.protocol === 'file:') ? 'http://localhost:3000' : `${location.protocol}//${location.host}`;
@@ -525,12 +558,14 @@ document.addEventListener('DOMContentLoaded', () => {
                     headers['Authorization'] = `Bearer ${token}`;
                 }
 
-                // Construir payload con información del cupón
+                // Construir payload con información del cupón y tarifas
                 const payload = {
                     usuario_id: usuario.id,
                     cupon_codigo: cuponAplicado?.codigo || null,
                     cupon_descuento: cuponAplicado?.descuento || 0,
-                    pais: pais 
+                    pais: pais,
+                    impuesto: tarifasUsuario?.impuesto || 16,
+                    envio: tarifasUsuario?.envio || 15.00
                 };
 
                 console.info('📤 Enviando nota de compra:', payload);
@@ -564,6 +599,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         html: `
                             <p>Tu nota de compra ha sido enviada a tu correo</p>
                             ${cuponAplicado?.codigo ? `<p style="color: #4caf50; margin-top: 10px;"><i class="fas fa-tag"></i> Cupón "${cuponAplicado.codigo}" aplicado con éxito</p>` : ''}
+                            ${tarifasUsuario?.pais ? `<p style="color: #1976d2; margin-top: 5px;"><i class="fas fa-globe"></i> Envío a: ${tarifasUsuario.pais}</p>` : ''}
                         `,
                         icon: 'success',
                         confirmButtonText: 'Continuar',
@@ -576,8 +612,9 @@ document.addEventListener('DOMContentLoaded', () => {
                         }
                     });
                     
-                    // Limpiar datos del cupón y carrito del localStorage
+                    // Limpiar datos del cupón, tarifas y carrito del localStorage
                     localStorage.removeItem("cuponAplicado");
+                    localStorage.removeItem("tarifasUsuario");
                     localStorage.removeItem("cartSummary");
                     
                     setTimeout(() => location.href = "tienda.html", 1200);
