@@ -592,15 +592,15 @@
         }
         
         if (elTax) {
-            elTax.textContent = `${tax.toFixed(2)}`;
+            elTax.textContent = `$${tax.toFixed(2)}`;
         }
         
         if (elShipping) {
-            elShipping.textContent = subtotal > 0 ? `${shipping.toFixed(2)}` : 'Gratis';
+            elShipping.textContent = subtotal > 0 ? `$${shipping.toFixed(2)}` : 'Gratis';
         }
         
         if (elTotal) {
-            elTotal.textContent = `${total.toFixed(2)}`;
+            elTotal.textContent = `$${total.toFixed(2)}`;
         }
 
         // Guardar en localStorage para usar en compra.html
