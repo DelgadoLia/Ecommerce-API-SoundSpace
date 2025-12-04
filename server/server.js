@@ -9,6 +9,7 @@ const captchaRutas = require('./Rutas/captchaRutas');
 const chatRutas = require('./Rutas/chatRutas');
 const chatAdminRutas = require('./Rutas/chatAdminRutas');
 const carritoRutas = require('./Rutas/carrito.routes');
+const cuponesRutas = require("./Rutas/cuponesRutas");
 const notaRutas = require('./Rutas/nota.routes');
 const pool = require('./DB/conexion');
 const fs = require("fs");
@@ -33,7 +34,6 @@ app.use("/uploads", express.static(carpeta));
 
 // Servir archivos estáticos del cliente (HTML/CSS/JS) si se desea
 const clientDir = path.join(__dirname, '..', 'client');
-app.use(express.static(clientDir));
 
 app.get("/imagenes", (req, res) => {
   try {
@@ -50,6 +50,7 @@ app.get('/', (req, res) => {
 });
 
 app.use('/api/productos', baseRutas);
+app.use('/api/cupones', cuponesRutas);
 app.use('/api/admin', adminRutas);
 app.use('/api/carrito', carritoRutas);
 app.use('/api/nota', notaRutas);
@@ -58,7 +59,6 @@ app.use('/api/correo', correoRutas);
 app.use('/api/captcha', captchaRutas);
 app.use('/api/chat', chatRutas);
 app.use('/api/chat-admin', chatAdminRutas);
-
 // Probar conexión a BD
 async function testConnection() {
   try {
@@ -84,6 +84,8 @@ async function ensureCarritoNombreImagenColumn() {
     console.error('Error al asegurar la columna nombre_imagen en carrito:', err.message);
   }
 }
+
+app.use(express.static(clientDir));
 
 app.listen(PORT, () => {
   console.log(`🚀 Servidor en http://localhost:${PORT}`);

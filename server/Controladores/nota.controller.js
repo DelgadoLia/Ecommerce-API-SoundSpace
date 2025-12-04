@@ -49,13 +49,48 @@ exports.enviarNotaCompra = async (req, res) => {
       const unit = oferta > 0 ? precio * (1 - oferta/100) : precio;
       subtotal += unit * Number(i.cantidad || 1);
     });
-    const impuestos = subtotal * 0.16; // IVA 16%
-    const gastosEnvio = subtotal > 0 ? 15.00 : 0.00;
-    const cuponNombre = 'ROCK25'; // static for now ------------- FALTA LOGICA DE CUPON
-    const cuponAplicado = 0.00; // static for now ------------- FALTA LOGICA DE CUPON
+
+    // 4) Obtener tarifas según país (fallback a México)
+    const { pais } = req.body;
+    const paisReq = (typeof pais === 'string' && pais.trim() !== '') ? pais.trim() : 'México';
+    let impuestoRate = 0.16;
+    let envioFlat = 15.00;
+
+    try {
+      const [rows] = await pool.query(
+        'SELECT impuesto, envio FROM tarifas_envio_impuestos WHERE pais = ?',
+        [paisReq]
+      );
+      if (rows && rows.length > 0) {
+        impuestoRate = Number(rows[0].impuesto);
+        envioFlat = Number(rows[0].envio);
+      } else {
+        // no encontrado: dejar fallback y/o registrar
+        console.warn(`Tarifa para país "${paisReq}" no encontrada. Usando defaults.`);
+      }
+    } catch (err) {
+      console.error('Error consultando tarifas:', err.message);
+      // seguir con defaults
+    }
+
+    const impuestos = subtotal * impuestoRate;
+    const gastosEnvio = subtotal > 0 ? envioFlat : 0.00;
+
+    // 5) Aplicar cupon si viene
+    const { cupon_codigo, cupon_descuento } = req.body;
+
+    // Aplicar cupón si existe
+    let cuponNombre = null;
+    let cuponAplicado = 0;
+
+    if (cupon_codigo && cupon_descuento) {
+        cuponNombre = cupon_codigo;
+        cuponAplicado = (subtotal * (cupon_descuento / 100));
+    }
+
     const total = subtotal + impuestos + gastosEnvio - cuponAplicado;
 
-    // 4) Crear PDF en memoria con pdfkit
+    // 6) Crear PDF en memoria con pdfkit
     const doc = new PDFDocument({ size: 'A4', margin: 50 });
     const writableStreamBuffer = new streamBuffers.WritableStreamBuffer({ initialSize: (100 * 1024), incrementAmount: (10 * 1024) });
 
@@ -90,7 +125,8 @@ exports.enviarNotaCompra = async (req, res) => {
     doc.moveDown();
     doc.fontSize(12).text(`Cliente: ${user.nombreCompleto || ''}`);
     doc.fontSize(12).text(`Email: ${user.correo || ''}`);
-
+    doc.fontSize(12).text(`País de Envío: ${paisReq}`);
+    
     // Table header
     doc.moveDown();
     doc.fontSize(12).text('Detalles de la compra:', { underline: true });
@@ -141,9 +177,11 @@ exports.enviarNotaCompra = async (req, res) => {
     // Totals block
     doc.moveDown(1);
     doc.fontSize(10).text(`Subtotal: ${fmt(subtotal)}`, { align: 'right' });
-    doc.text(`Impuestos (IVA 16%): ${fmt(impuestos)}`, { align: 'right' });
+    doc.text(`Impuestos (${(impuestoRate * 100).toFixed(0)}%): ${fmt(impuestos)}`, { align: 'right' });
     doc.text(`Gastos de Envío: ${fmt(gastosEnvio)}`, { align: 'right' });
-    doc.text(`Cupón: ${cuponNombre} (-${fmt(cuponAplicado)})`, { align: 'right' });
+    if (cuponNombre) {
+        doc.text(`Cupón: ${cuponNombre} (-${fmt(cuponAplicado)})`, { align: 'right' });
+    }
     doc.moveDown(0.2);
     doc.fontSize(12).text(`Total: ${fmt(total)}`, { align: 'right', underline: true });
 
@@ -175,7 +213,7 @@ exports.enviarNotaCompra = async (req, res) => {
       }
     }
 
-    // 5) Enviar mail con adjunto PDF
+    // 7) Enviar mail con adjunto PDF
     const html = `
       <h3>Gracias por tu compra, ${user.nombreCompleto || ''}</h3>
       <p>Adjuntamos la nota de compra en PDF.</p>
@@ -199,31 +237,36 @@ exports.enviarNotaCompra = async (req, res) => {
 
     await transporter.sendMail(mailOptions);
 
-
-    // 6) Reducir stock y aumentar ventas en BD por la cantidad que se compró
+    // 8) Reducir stock en BD (disponibilidad) por la cantidad que se compró
     // Usamos una transacción para asegurar consistencia
     try {
       await pool.query('START TRANSACTION');
+
       for (const item of items) {
         const qty = Number(item.cantidad) || 1;
-        // Reducir stock y aumentar ventas
+
         const [updateResult] = await pool.query(
-          'UPDATE productos SET disponibilidad = GREATEST(disponibilidad - ?, 0), ventas = ventas + ? WHERE id = ?',
-          [qty, qty, item.producto_id]
+          `UPDATE productos
+           SET disponibilidad = GREATEST(disponibilidad - ?, 0),
+               ventas = ventas + ?,
+               vendidos = vendidos + ?
+           WHERE id = ?`,
+          [qty, qty, qty, item.producto_id]
         );
+
         if (updateResult.affectedRows === 0) {
           console.warn(`No se actualizó stock/ventas para producto_id ${item.producto_id}`);
         }
       }
+
       await pool.query('COMMIT');
     } catch (txErr) {
-      console.error('Error actualizando stock/ventas en transacción, rollback:', txErr.message);
-      try { await pool.query('ROLLBACK'); } catch (rbErr) { console.error('Error en rollback:', rbErr.message); }
-      // No block email success; just inform
-      return res.status(500).json({ success: false, message: 'Error actualizando stock/ventas: ' + txErr.message });
+      console.error('Error en transacción de actualización:', txErr.message);
+      await pool.query('ROLLBACK');
+      return res.status(500).json({ success: false, message: 'Error actualizando inventario/ventas' });
     }
 
-    //Limpiar carrito después de compra
+    // 9)Limpiar carrito después de compra
     try {
       await pool.query("DELETE FROM carrito WHERE usuario_id = ?", [usuario_id]);
       console.log(`Carrito del usuario ${usuario_id} limpiado`);

@@ -1,24 +1,39 @@
 document.addEventListener('DOMContentLoaded', () => {
-    // Lógica para mostrar/ocultar formularios de pago
+
+    // ---------------------- REFERENCIAS ----------------------
     const paymentOptions = document.querySelectorAll('input[name="payment-method"]');
+
     const formContainers = {
         'card': document.getElementById('card-form'),
         'transfer': document.getElementById('transfer-form'),
         'oxxo': document.getElementById('oxxo-form')
     };
 
-    function showPaymentForm(method) {
-        // Ocultar todos los formularios
-        Object.values(formContainers).forEach(form => {
-            form.classList.remove('active');
-            form.classList.add('hidden');
-        });
+    const cardInputs = document.querySelectorAll('#card-form input[required]');
+    const transferInputs = document.querySelectorAll('#transfer-form input[required]');
+    const oxxoInputs = document.querySelectorAll('#oxxo-form input[required]');
 
-        // Mostrar el formulario seleccionado
-        const activeForm = formContainers[method];
-        if (activeForm) {
-            activeForm.classList.add('active');
-            activeForm.classList.remove('hidden');
+    let selectedMethod = "card";
+
+    // ---------------------- MARCAR INPUT ----------------------
+    function markInput(input, valid, message = "") {
+        let errorMsg = input.parentElement.querySelector(".error-msg");
+
+        if (!errorMsg) {
+            errorMsg = document.createElement("div");
+            errorMsg.classList.add("error-msg");
+            input.parentElement.appendChild(errorMsg);
+        }
+
+        if (valid) {
+            input.classList.remove("input-error");
+            input.classList.add("input-valid");
+            errorMsg.classList.remove("active");
+        } else {
+            input.classList.add("input-error");
+            input.classList.remove("input-valid");
+            errorMsg.textContent = message;
+            errorMsg.classList.add("active");
         }
     }
 
@@ -210,28 +225,149 @@ document.addEventListener('DOMContentLoaded', () => {
         const usuario = JSON.parse(localStorage.getItem('usuario')) || null;
         if (!usuario || !usuario.id) {
             Swal.fire('Debes iniciar sesión', 'Debes iniciar sesión para finalizar la compra', 'warning');
+    // ---------------------- VALIDACIONES ----------------------
+    function validateEmail(value) {
+        return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+    }
+
+    function validateCardNumber(value) {
+        return /^\d{16}$/.test(value);
+    }
+
+    function validateCVV(value) {
+        return /^\d{3,4}$/.test(value);
+    }
+
+    function validateNotEmpty(value) {
+        return value.trim().length > 0;
+    }
+
+    function validateNumeric(value) {
+        return /^\d+$/.test(value);
+    }
+
+    // ---------------------- VALIDACIÓN GLOBAL ----------------------
+    function validateAll() {
+        let formValid = true;
+
+        // Validar envío
+        shippingInputs.forEach(input => {
+            const valid = validateNotEmpty(input.value);
+            markInput(input, valid, "Este campo es obligatorio");
+            if (!valid) formValid = false;
+        });
+
+        // Validar método de pago
+        if (selectedMethod === "card") {
+            cardInputs.forEach(input => {
+                let valid = validateNotEmpty(input.value);
+                let message = "Este campo es obligatorio";
+
+                if (input.id === "card-number") {
+                    valid = validateCardNumber(input.value);
+                    message = "La tarjeta debe tener 16 dígitos";
+                }
+
+                if (input.id === "card-cvv") {
+                    valid = validateCVV(input.value);
+                    message = "CVV inválido";
+                }
+
+                if (input.id === "card-email") {
+                    valid = validateEmail(input.value);
+                    message = "Email inválido";
+                }
+
+                markInput(input, valid, message);
+                if (!valid) formValid = false;
+            });
+        }
+
+        if (selectedMethod === "transfer") {
+            transferInputs.forEach(input => {
+                const valid = validateNotEmpty(input.value);
+                markInput(input, valid, "Este campo es obligatorio");
+                if (!valid) formValid = false;
+            });
+        }
+
+        if (selectedMethod === "oxxo") {
+            oxxoInputs.forEach(input => {
+                const valid = validateNotEmpty(input.value);
+                markInput(input, valid, "Este campo es obligatorio");
+                if (!valid) formValid = false;
+            });
+        }
+
+        // Activar/desactivar botón
+        finalizarCompraBtn.disabled = !formValid;
+        finalizarCompraBtn.textContent = formValid
+            ? "Terminar Compra"
+            : "Completa los datos para continuar";
+
+        return formValid;
+    }
+
+    // Disparar validación con cada input
+    document.querySelectorAll("input, select").forEach(el => {
+        el.addEventListener("input", validateAll);
+    });
+
+    validateAll();
+
+
+    // ---------------------- CAMBIO DE MÉTODO ----------------------
+    function showPaymentForm(method) {
+        selectedMethod = method;
+
+        Object.values(formContainers).forEach(form => {
+            form.classList.add("hidden");
+            form.classList.remove("active");
+        });
+
+        formContainers[method].classList.add("active");
+        formContainers[method].classList.remove("hidden");
+
+        validateAll();
+    }
+
+    paymentOptions.forEach(opt => {
+        opt.addEventListener("change", e => showPaymentForm(e.target.value));
+    });
+
+    showPaymentForm("card");
+
+
+    // ---------------------- FINALIZAR COMPRA ----------------------
+    finalizarCompraBtn.addEventListener('click', async () => {
+
+        if (!validateAll()) {
+            Swal.fire("Datos incompletos", "Revisa los campos marcados.", "warning");
             return;
         }
 
-        const confirmResult = await Swal.fire({
-            title: '¿Terminar Compra?',
-            text: 'Se enviará la nota de compra a tu correo electrónico',
-            icon: 'question',
+        const usuario = JSON.parse(localStorage.getItem("usuario"));
+
+        if (!usuario || !usuario.id) {
+            Swal.fire("Inicia sesión", "Debes iniciar sesión para continuar", "warning");
+            return;
+        }
+
+        const confirm = await Swal.fire({
+            title: "¿Confirmar compra?",
+            text: "Se enviará la nota de compra a tu correo",
+            icon: "question",
             showCancelButton: true,
-            confirmButtonText: 'Sí, enviar nota',
-            cancelButtonText: 'Cancelar'
+            confirmButtonText: "Sí",
+            cancelButtonText: "Cancelar"
         });
 
-        if (!confirmResult.isConfirmed) return;
+        if (!confirm.isConfirmed) return;
 
-            // Opcional: incluir datos de dirección para incluirlos en el PDF
-            const shippingForm = document.getElementById('shipping-form');
-            const formData = { usuario_id: usuario.id };
-            const apiOrigin = (location.protocol === 'file:') ? 'http://localhost:3000' : `${location.protocol}//${location.host}`;
-            const primary = `${apiOrigin}/api/nota/compra`;
-            const fallback = 'http://localhost:3000/api/nota/compra';
-        // Podríamos extraer más campos si es necesario
+        const cupon = JSON.parse(localStorage.getItem("cupon")) || {};
 
+        const url = `http://localhost:3000/api/nota/compra`;
+        
         try {
             const token = localStorage.getItem('token');
             const headers = { 'Content-Type': 'application/json' };
@@ -239,11 +375,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 headers['Authorization'] = `Bearer ${token}`;
             }
             
-            let resp = await fetch(primary, {
+            /*let resp = await fetch(primary, {
                 method: 'POST',
                 headers: headers,
                 body: JSON.stringify(formData)
-            });
+            });*/
             if (!resp.ok) {
                 console.warn(`POST nota comp failed (${resp.status}) at primary, falling back to ${fallback}`);
                 resp = await fetch(fallback, { method: 'POST', headers: headers, body: JSON.stringify(formData) });
@@ -252,7 +388,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 const text = await resp.text();
                 throw new Error(`HTTP ${resp.status} - ${text}`);
             }
-            const json = await resp.json();
+            //const json = await resp.json();
             if (json && json.success) {
                 Swal.fire('Enviado', 'La nota de compra ha sido enviada a tu correo', 'success');
                 // Redirect to main page shortly after confirmation
@@ -260,9 +396,33 @@ document.addEventListener('DOMContentLoaded', () => {
             } else {
                 Swal.fire('Error', json.message || 'Ocurrió un error', 'error');
             }
+
+            // AQUI LEEMOS EL PAÍS 
+            const pais = document.getElementById("pais") ? document.getElementById("pais").value : "México";
+
+            const resp = await fetch(url, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    usuario_id: usuario.id,
+                    cupon_codigo: cupon.codigo || null,
+                    cupon_descuento: cupon.descuento || 0,
+                    pais: pais 
+                })
+            });
+
+            const json = await resp.json();
+
+            if (json.success) {
+                Swal.fire("Éxito", "Nota enviada a tu correo", "success");
+                localStorage.removeItem("cupon");
+                setTimeout(() => location.href = "tienda.html", 1200);
+            }
+
         } catch (err) {
-            console.error('Error al finalizar compra:', err);
-            Swal.fire('Error', 'No se pudo enviar la nota de compra. Ver consola para detalles', 'error');
+            console.error(err);
+            Swal.fire("Error", "No se pudo completar la compra", "error");
         }
+
     });
 });
